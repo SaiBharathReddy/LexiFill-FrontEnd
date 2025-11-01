@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Placeholder {
@@ -11,6 +11,7 @@ export default function FillPage() {
   const parsed = localStorage.getItem("parsedData");
   const data = parsed ? JSON.parse(parsed) : null;
   const navigate = useNavigate();
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -19,21 +20,16 @@ export default function FillPage() {
   const [loading, setLoading] = useState(false);
 
   if (!data || !data.placeholders || data.placeholders.length === 0) {
-    return <p>No data found. Please upload a document first.</p>;
+    return <p className="text-center mt-10">No data found. Please upload a document first.</p>;
   }
 
-  // Generate unique keys for each placeholder instance
   const placeholders: (Placeholder & { key: string })[] = data.placeholders.map(
-    (ph: Placeholder, idx: number) => ({
-      ...ph,
-      key: `${ph.placeholder}_${idx}`,
-    })
+    (ph: Placeholder, idx: number) => ({ ...ph, key: `${ph.placeholder}_${idx}` })
   );
 
   // Show each AI question when index changes
   useEffect(() => {
     if (currentIndex >= placeholders.length) return;
-
     const q = placeholders[currentIndex].question;
     setMessages((prev) => {
       if (prev.length && prev[prev.length - 1].text === q && prev[prev.length - 1].sender === "AI")
@@ -42,14 +38,17 @@ export default function FillPage() {
     });
   }, [currentIndex]);
 
+  // Auto-scroll to latest message
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleSubmitAnswer = () => {
     const currentPh = placeholders[currentIndex];
     const answer = userInput.trim();
     if (!answer) return;
 
-    // Store by unique key (avoids overwriting repeated placeholders)
     setValues((prev) => ({ ...prev, [currentPh.key]: answer }));
-
     setMessages((prev) => [...prev, { sender: "User", text: answer }]);
     setUserInput("");
     setCurrentIndex((prev) => prev + 1);
@@ -63,8 +62,8 @@ export default function FillPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileId: data.fileId,
-          answers: values,               // keyed by unique key
-          placeholders: placeholders,    // each placeholder also has its key
+          answers: values,
+          placeholders: placeholders,
         }),
       });
 
@@ -81,35 +80,38 @@ export default function FillPage() {
   };
 
   return (
-    <div className="bg-white shadow rounded-2xl p-8 w-full max-w-2xl">
-      <h2 className="text-xl font-semibold mb-4">Fill Placeholders</h2>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-tr from-purple-50 via-indigo-50 to-blue-50">
+  <h2 className="text-3xl font-semibold mb-6 text-indigo-700">Fill Placeholders</h2>
 
-      <div className="chat-box space-y-2 mb-4 max-h-[400px] overflow-y-auto">
+  <div className="flex-1 w-full bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-lg max-h-[500px] overflow-y-auto space-y-3">
         {messages.map((m, idx) => (
-          <div
-            key={idx}
-            className={`p-2 rounded-lg ${
-              m.sender === "AI" ? "bg-gray-100 text-gray-800" : "bg-indigo-600 text-white"
-            }`}
-          >
-            {m.text}
+          <div key={idx} className={`flex ${m.sender === "AI" ? "justify-start" : "justify-end"}`}>
+            <div
+              className={`px-4 py-2 rounded-2xl max-w-[70%] break-words ${
+                m.sender === "AI" ? "bg-gray-200 text-gray-900" : "bg-blue-600 text-white"
+              }`}
+            >
+              {m.text}
+            </div>
           </div>
         ))}
+        <div ref={chatEndRef} />
       </div>
 
+      {/* Input */}
       {currentIndex < placeholders.length ? (
-        <div className="flex gap-2">
+        <div className="flex w-full mt-4 gap-2">
           <input
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Type your answer..."
             onKeyDown={(e) => e.key === "Enter" && handleSubmitAnswer()}
           />
           <button
             onClick={handleSubmitAnswer}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg"
+            className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
           >
             Send
           </button>

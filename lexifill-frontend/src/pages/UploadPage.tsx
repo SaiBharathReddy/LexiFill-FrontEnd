@@ -1,4 +1,3 @@
-// UploadPage.tsx (updated)
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -32,7 +31,6 @@ export default function UploadPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      // Save backend response to localStorage
       localStorage.setItem("parsedData", JSON.stringify(data));
       navigate("/fill");
     } catch (err) {
@@ -44,29 +42,31 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md text-center">
-      <h2 className="text-xl font-semibold mb-4">Upload Legal Document</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-6">
+  <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-10 w-full max-w-lg text-center border border-gray-200">
+    <h2 className="text-3xl font-bold mb-6 text-indigo-700">Upload Legal Document</h2>
 
-      <input
-        type="file"
-        accept=".docx"
-        onChange={handleFileChange}
-        className="mb-4 block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
-      />
+        <input
+          type="file"
+          accept=".docx"
+          onChange={handleFileChange}
+          className="mb-6 block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none p-2"
+        />
 
-      {file && (
-        <p className="text-sm text-gray-600 mb-4">
-          Selected: <span className="font-medium">{file.name}</span>
-        </p>
-      )}
+        {file && (
+          <p className="text-sm text-gray-600 mb-6 break-words">
+            Selected: <span className="font-medium">{file.name}</span>
+          </p>
+        )}
 
-      <button
-        onClick={handleSubmit}
-        disabled={!file || loading}
-        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
-      >
-        {loading ? "Analyzing..." : "Upload & Analyze"}
-      </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!file || loading}
+          className="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 disabled:bg-gray-400 transition-colors duration-200"
+        >
+          {loading ? "Analyzing..." : "Upload & Analyze"}
+        </button>
+      </div>
     </div>
   );
 }
